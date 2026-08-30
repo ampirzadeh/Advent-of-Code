@@ -46,6 +46,7 @@ pub fn main(init: std.process.Init) !void {
         1 => try runner.run(@import("day1.zig"), day, content),
         2 => try runner.run(@import("day2.zig"), day, content),
         4 => try runner.run(@import("day4.zig"), day, content),
+        5 => try runner.run(@import("day5.zig"), day, content),
         else => {
             try stderr.print("Day {d} is not implemented.\n", .{day});
         },
