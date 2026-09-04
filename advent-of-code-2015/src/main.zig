@@ -7,7 +7,15 @@ const SolutionRunner = root.SolutionRunner;
 
 pub fn main(init: std.process.Init) !void {
     const io = init.io;
-    const allocator = init.arena.allocator();
+    var gpa: std.heap.DebugAllocator(.{}) = .init;
+    const allocator = gpa.allocator();
+    defer {
+        const deinit_status = gpa.deinit();
+        //fail test; can't try in defer as defer is executed after we return
+        if (deinit_status == .leak) {
+            @panic("boo");
+        }
+    }
 
     var stdout_file_writer: Io.File.Writer = .init(.stdout(), io, &.{});
     const stdout = &stdout_file_writer.interface;
@@ -16,6 +24,7 @@ pub fn main(init: std.process.Init) !void {
     const stderr = &stderr_file_writer.interface;
 
     const args = try init.minimal.args.toSlice(allocator);
+    defer allocator.free(args);
 
     if (args.len < 2 or args.len > 2) {
         try stdout.print(helpText, .{});
@@ -40,7 +49,10 @@ pub fn main(init: std.process.Init) !void {
     };
 
     const input_path = try std.fmt.allocPrint(allocator, "inputs/day{d}.txt", .{day});
+    defer allocator.free(input_path);
+
     const content = try Io.Dir.cwd().readFileAlloc(io, input_path, allocator, .unlimited);
+    defer allocator.free(content);
 
     switch (day) {
         1 => try runner.run(@import("day1.zig"), day, content),
@@ -50,6 +62,9 @@ pub fn main(init: std.process.Init) !void {
         6 => try runner.run(@import("day6.zig"), day, content),
         7 => try runner.run(@import("day7.zig"), day, content),
         8 => try runner.run(@import("day8.zig"), day, content),
+        9 => try runner.run(@import("day9.zig"), day, content),
+        10 => try runner.run(@import("day10.zig"), day, content),
+        11 => try runner.run(@import("day11.zig"), day, content),
         else => {
             try stderr.print("Day {d} is not implemented.\n", .{day});
         },
